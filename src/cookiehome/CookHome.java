@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.apache.http.client.ClientProtocolException;
@@ -88,6 +89,7 @@ public class CookHome
 	{
 		HashMap<String, String> head = new HashMap<String, String>();
 		head.put("coordinate", coordinate);
+		head.put("size", "10000");
 
 		return post("http://user.mapi.jiashuangkuaizi.com/Kitchen/kitchenList", head, null);
 	}
@@ -118,12 +120,40 @@ public class CookHome
 	 */
 	public static void main(String[] args) throws ClientProtocolException, IOException
 	{		
-		System.out.println(java.net.URLDecoder.decode("MTkxZDczYjI1MmM2ZWQ0ZWFmMjE2OTBkZGIyNjc1ODVfMTM5MTEwNzgxNjAjMTY4MzQwOA%3D%3D","utf-8"));
-		
 		CookHome c = new CookHome();
-//		System.out.println(c.kitchenList("116.427309,39.858895"));
+		JSONObject json = c.kitchenList("116.427309,39.858895");
+		
+		JSONArray arr = json.getJSONObject("data").getJSONArray("list");
+		
+		StringBuffer buf = new StringBuffer();
+		buf.append(String.format("名称\t地址\t哪里人\t菜名\t价格\t销售数量\n"));
+		for (int i=0,len=arr.size();i<len;i++)
+		{
+			JSONObject k = arr.getJSONObject(i);
+			String name = k.getString("kitchen_name");
+			String id = k.getString("kitchen_id");
+			String addr = k.getString("kitchen_address");
+			String nativepop = k.getString("native_place");
+			
+			//System.out.println(k);
+			
+			JSONObject ds = c.dishList(id);
+			JSONArray darr = ds.getJSONObject("data").getJSONArray("recommends");
+			
+			for (int j=0,jlen=darr.size();j<jlen;j++)
+			{
+				JSONObject d = darr.getJSONObject(j);
+				
+				//System.out.println(d);
+				buf.append(String.format("%s\t%s\t%s\t%s\t%s\t%s\n", name,addr,nativepop,d.getString("dish_name"),d.getString("price"),d.getString("eat_num")));
+			}
+			
+		}
+		System.out.println(buf.toString());
+		
+		
 //		System.out.println(c.getKitchenSticker());
-		System.out.println(c.dishList("23050"));
+//		System.out.println(c.dishList("23050"));
 
 	}
 
